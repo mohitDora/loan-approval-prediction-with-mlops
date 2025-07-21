@@ -1,0 +1,5 @@
+{
+    "param_grid_max_depth":10,
+    "param_grid_max_features":"sqrt",
+    "classifier__n_estimators": 100
+}

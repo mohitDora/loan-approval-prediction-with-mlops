@@ -1,0 +1,18 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+dvc[s3]
+mlflow
+pytest
+pandera
+fastapi
+uvicorn
+python-multipart
+joblib
+pymongo
+python-dotenv
+ipykernel
+ruff
+-e .
