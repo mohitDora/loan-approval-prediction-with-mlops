@@ -1,0 +1,22 @@
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+# Use Ruff as a formatter (optional)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ✅ Move linter options into the `lint` section
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]
+
+# Optional: Exclude files
+exclude = [
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
+  "migrations",
+]

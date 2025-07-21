@@ -6,3 +6,5 @@ temp
 *.egg-info
 __pycache__
 *.log
+*.csv
+*.joblib

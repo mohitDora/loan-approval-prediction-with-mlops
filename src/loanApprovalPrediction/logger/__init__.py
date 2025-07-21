@@ -1,14 +1,12 @@
+import os
 import sys
-from pathlib import Path
 
 from loguru import logger
 
-# Get the root directory of the project
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent  # Adjust as needed
+from loanApprovalPrediction.constants import ROOT_DIR
 
-# Ensure the logs directory exists at the project root
 LOG_DIR = ROOT_DIR / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
 
 # Remove default handler to configure our own
 logger.remove()

@@ -1,24 +1,27 @@
 import os
-from loanApprovalPrediction.constants import CONFIG_FILE_PATH, PARAMS_FILE_PATH
-from loanApprovalPrediction.utils.common import create_directories, read_json
-from loanApprovalPrediction.entity import DataIngestionConfig
-from dotenv import load_dotenv
 from pathlib import Path
 
-load_dotenv()
+from dotenv import load_dotenv
 
-project_root = Path(__file__).resolve().parent.parent.parent.parent
+from loanApprovalPrediction.constants import (
+    CONFIG_FILE_PATH,
+    PARAMS_FILE_PATH,
+    ROOT_DIR,
+)
+from loanApprovalPrediction.entity import DataIngestionConfig
+from loanApprovalPrediction.utils.common import create_directories, read_json
+
+load_dotenv()
 
 
 class ConfigurationManager:
     def __init__(
         self, config_filepath=CONFIG_FILE_PATH, params_filepath=PARAMS_FILE_PATH
     ):
-
-        self.config = read_json(Path.joinpath(project_root, config_filepath))
-        self.params = read_json(Path.joinpath(project_root, params_filepath))
+        self.config = read_json(Path.joinpath(ROOT_DIR, config_filepath))
+        self.params = read_json(Path.joinpath(ROOT_DIR, params_filepath))
         print(self.config)
-        create_directories([Path.joinpath(project_root, self.config["artifacts_root"])])
+        create_directories([Path.joinpath(ROOT_DIR, self.config["artifacts_root"])])
 
     def get_data_ingestion_config(self):
         config = self.config["data_ingestion"]
@@ -27,8 +30,10 @@ class ConfigurationManager:
             "<password>", os.getenv("MONGO_DB_PASSWORD")
         )
 
+        create_directories([Path.joinpath(ROOT_DIR, config["root_dir"])])
+        create_directories([Path.joinpath(ROOT_DIR, config["root_dir"], "raw_data")])
         create_directories(
-            [Path.joinpath(project_root, config["root_dir"])] + [config["root_dir"]]
+            [Path.joinpath(ROOT_DIR, config["root_dir"], "processed_data")]
         )
 
         data_ingestion_config = DataIngestionConfig(
