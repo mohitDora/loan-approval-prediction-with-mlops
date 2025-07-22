@@ -8,7 +8,11 @@ from loanApprovalPrediction.constants import (
     PARAMS_FILE_PATH,
     ROOT_DIR,
 )
-from loanApprovalPrediction.entity import DataIngestionConfig, DataProcessingConfig
+from loanApprovalPrediction.entity import (
+    DataIngestionConfig,
+    DataProcessingConfig,
+    ModelTrainerConfig,
+)
 from loanApprovalPrediction.utils.common import create_directories, read_json
 
 load_dotenv()
@@ -31,10 +35,6 @@ class ConfigurationManager:
         )
 
         create_directories([Path.joinpath(ROOT_DIR, config["root_dir"])])
-        # create_directories([Path.joinpath(ROOT_DIR, config["root_dir"], "raw_data")])
-        # create_directories(
-        #     [Path.joinpath(ROOT_DIR, config["root_dir"], "processed_data")]
-        # )
 
         data_ingestion_config = DataIngestionConfig(
             root_dir=config["root_dir"],
@@ -57,8 +57,22 @@ class ConfigurationManager:
 
         return data_processing_config
 
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
+
+        return ModelTrainerConfig(
+            root_dir=Path("artifacts/models"),
+            experiment_name="Loan_Approval_RandomForest_Direct_Train",  # Updated experiment name
+            registered_model_name="LoanApprovalRandomForestModel",
+            artifact_path="loan_approval_model",
+            best_params=self.params,  # Pass the best parameters directly
+            cv_folds=3,  # Not directly used for single model train, but kept in config
+            random_state=42,
+            test_size=0.2,
+            val_size=0.25,
+            mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
+        )
+
 
 if __name__ == "__main__":
     config = ConfigurationManager()
     data_ingestion_config = config.get_data_ingestion_config()
-    print(data_ingestion_config)

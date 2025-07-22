@@ -49,6 +49,7 @@ class DataProcessor:
         except Exception as e:
             error_msg = f"Error loading data from {self.raw_data_path}: {e}"
             logger.error(error_msg)
+            raise e
 
     def _identify_features(self, X: pd.DataFrame) -> tuple[list, list]:
         """
@@ -108,6 +109,7 @@ class DataProcessor:
         except Exception as e:
             error_msg = f"Error creating preprocessing pipeline: {e}"
             logger.error(error_msg)
+            raise e
 
     def initiate_data_transformation(
         self,
@@ -174,6 +176,7 @@ class DataProcessor:
         except Exception as e:
             error_msg = f"Error during data transformation: {e}"
             logger.error(error_msg)
+            raise e
 
     def split_data(
         self,
@@ -212,6 +215,7 @@ class DataProcessor:
         except Exception as e:
             error_msg = f"Error during data splitting: {e}"
             logger.error(error_msg)
+            raise e
 
     def save_artifacts(self, preprocessor: ColumnTransformer):
         """
@@ -227,37 +231,4 @@ class DataProcessor:
         except Exception as e:
             error_msg = f"Error saving preprocessor artifacts: {e}"
             logger.error(error_msg)
-
-
-# if __name__ == "__main__":
-
-#     logger.info("--- Starting DataProcessor demonstration ---")
-#     config = configuration.ConfigurationManager()
-#     data_processor = DataProcessor(config=config.get_data_processor_config())
-
-#     try:
-#         # Step 1: Initiate data transformation (loads, preprocesses, gets original X)
-#         X_processed, y_series, preprocessor, feature_names, original_X_df = (
-#             data_processor.initiate_data_transformation()
-#         )
-
-#         # Step 2: Split the processed data
-#         X_train, X_val, X_test, y_train, y_val, y_test = data_processor.split_data(
-#             X_processed, y_series
-#         )
-
-#         logger.info(f"Shape of processed features (X): {X_processed.shape}")
-#         logger.info(f"Shape of target (y): {y_series.shape}")
-#         logger.info(f"Number of generated features: {len(feature_names)}")
-#         logger.info(f"Sample Feature Names: {feature_names[:5]}...")
-
-#         logger.info(f"Train set size: {X_train.shape[0]} samples")
-#         logger.info(f"Validation set size: {X_val.shape[0]} samples")
-#         logger.info(f"Test set size: {X_test.shape[0]} samples")
-
-#         # Step 3: Save the preprocessor and feature names
-#         data_processor.save_artifacts(preprocessor, feature_names)
-#         logger.info("Data processing and artifact saving completed successfully.")
-
-#     except Exception as e:
-#         logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+            raise e

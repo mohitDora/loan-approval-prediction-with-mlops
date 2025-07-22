@@ -28,6 +28,7 @@ class DataIngestion:
                 f"Failed to connect to MongoDB at {self.config.source_url}: {e}",
                 exc_info=True,
             )
+            raise e
 
     def _close_mongodb_connection(self):
         """Closes the MongoDB connection."""
@@ -73,6 +74,7 @@ class DataIngestion:
 
         except Exception as e:
             logger.error(f"Error during data ingestion: {e}", exc_info=True)
+            raise e
         finally:
             self._close_mongodb_connection()
 
@@ -87,3 +89,4 @@ if __name__ == "__main__":
         logger.error(
             f"An unexpected error occurred during data ingestion: {e}", exc_info=True
         )
+        raise e

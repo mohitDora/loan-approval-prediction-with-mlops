@@ -8,7 +8,7 @@
     "file_name": "loanApprovalPrediction.csv"
   },
   "data_processing": {
-    "root_dir": "artifacts/preprocesser",
+    "root_dir": "artifacts/preprocessor",
     "preprocessor_object_file_name": "preprocessor.joblib"
   }
 }

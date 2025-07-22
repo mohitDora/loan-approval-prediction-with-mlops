@@ -1,10 +1,11 @@
-# src/model_trainer.py
 import os
+from urllib.parse import urlparse
 
 import mlflow
 import mlflow.sklearn
-import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -14,219 +15,196 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import GridSearchCV, KFold
-from sklearn.pipeline import (
-    Pipeline,
-)  # Important: We are building a pipeline with preprocessor and classifier
+from sklearn.pipeline import Pipeline
 
-from loanApprovalPrediction.components.data_processor import (
-    initiate_data_transformation,
-    load_data,
-    split_data,
-)
+from loanApprovalPrediction.entity import ModelTrainerConfig
+from loanApprovalPrediction.logger import logger
 
 load_dotenv()
 
-# Import functions from data_processor
 
-
-def train_and_log_model(
-    model_name,
-    classifier,
-    param_grid,
-    X_train,
-    y_train,
-    X_val,
-    y_val,
-    X_test,
-    y_test,
-    preprocessor,
-    original_X_for_example,
-):
+class ModelTrainer:
     """
-    Trains a model with given classifier and hyperparameters,
-    logs results to MLflow, and registers the model.
+    A class to handle model training, evaluation, and MLflow logging
+    using predefined best parameters for the Loan Approval Prediction project.
     """
-    mlflow.set_experiment("Loan_Approval_RandomForest_Experiments")
-    with mlflow.start_run(run_name=model_name) as run:
-        run_id = run.info.run_id
-        print(f"MLflow Run ID: {run_id}")
 
-        mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
+    def __init__(
+        self,
+        config: ModelTrainerConfig,
+        preprocessor: ColumnTransformer = None,
+    ):
+        self.config = config
+        self.data_processor = preprocessor
+        logger.info("Initialized ModelTrainer.")
 
-        # Log the full parameter grid for the GridSearchCV
-        mlflow.log_params(
-            {
-                f"grid_param_{k.replace('classifier__', '')}": v
-                for k, v in param_grid.items()
-            }
-        )
+    def _set_mlflow_environment(self):
+        """Sets the MLflow tracking URI and experiment name."""
+        try:
+            mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
+            mlflow.set_experiment(self.config.experiment_name)
+            logger.info(
+                f"MLflow tracking URI set to: {os.getenv('MLFLOW_TRACKING_URI')}"
+            )
+            logger.info(f"MLflow experiment set to: {self.config.experiment_name}")
+        except Exception as e:
+            error_msg = f"Error setting MLflow environment: {e}"
+            logger.error(error_msg)
+            raise e
 
-        # Create a full pipeline that includes preprocessing and the classifier
-        # This pipeline will be saved as the MLflow model
-        full_pipeline = Pipeline(
-            steps=[
-                ("preprocessor", preprocessor),  # The fitted preprocessor object
-                ("classifier", classifier),
-            ]
-        )
+    def train_model(self):
+        """
+        Orchestrates the entire model training and logging process.
+        This includes data transformation, splitting, direct model training
+        with best parameters, evaluation, and MLflow logging.
+        """
+        self._set_mlflow_environment()
 
-        print(f"Starting GridSearchCV for {model_name}...")
-        grid_search = GridSearchCV(
-            full_pipeline,
-            param_grid,
-            cv=KFold(n_splits=3, shuffle=True, random_state=42),
-            scoring="accuracy",
-            n_jobs=-1,
-            verbose=1,
-        )
+        try:
+            # 1. Data Transformation
+            logger.info("Initiating data transformation...")
+            X_processed_np, y_series, preprocessor, feature_names, original_X_df = (
+                self.data_processor.initiate_data_transformation()
+            )
+            logger.info("Data transformation completed.")
 
-        # Fit GridSearchCV on the training data
-        grid_search.fit(
-            original_X_for_example.loc[y_train.index], y_train
-        )  # Fit on the original X_train part
-        # GridSearchCV will handle internal preprocessing
+            # 2. Data Splitting
+            logger.info("Splitting data into train, validation, and test sets...")
+            (
+                X_train_processed,
+                X_val_processed,
+                X_test_processed,
+                y_train,
+                y_val,
+                y_test,
+            ) = self.data_processor.split_data(
+                X_processed_np,
+                y_series,
+                test_size=self.config.test_size,
+                val_size=self.config.val_size,
+                random_state=self.config.random_state,
+            )
+            logger.info("Data splitting completed.")
 
-        best_model = grid_search.best_estimator_
-        best_params = grid_search.best_params_
-        best_cv_score = grid_search.best_score_
+            # 3. Define Classifier using best_params
+            classifier = RandomForestClassifier(
+                **self.config.best_params, random_state=self.config.random_state
+            )
+            logger.info(
+                f"Initialized RandomForestClassifier with best parameters: {self.config.best_params}"
+            )
 
-        print(f"\nBest hyperparameters found for {model_name}: {best_params}")
-        print(f"Best cross-validation accuracy for {model_name}: {best_cv_score:.4f}")
+            # 4. Perform Training and Logging within an MLflow run
+            self._perform_training_and_logging(
+                model_name="Random_Forest_Best_Model_Training",  # Updated run name
+                classifier=classifier,
+                y_train=y_train,
+                y_test=y_test,
+                preprocessor=preprocessor,
+                original_X_df=original_X_df,  # Pass original X for fetching train/test splits
+            )
+            logger.info("Model training and logging process completed successfully.")
 
-        # Log best hyperparameters and best CV score
-        mlflow.log_params(best_params)
-        mlflow.log_metric("best_cv_accuracy", best_cv_score)
+        except Exception as e:
+            logger.error(
+                f"An unexpected error occurred in ModelTrainer.train_model: {e}",
+                exc_info=True,
+            )
+            raise e
 
-        # --- Evaluate on Validation Set (using the best model from GridSearchCV) ---
-        # Note: The best_model is already a Pipeline that includes preprocessing
-        y_val_pred = best_model.predict(
-            original_X_for_example.loc[y_val.index]
-        )  # Predict on original X_val part
-        y_val_proba = best_model.predict_proba(original_X_for_example.loc[y_val.index])[
-            :, 1
-        ]
+    def _perform_training_and_logging(
+        self,
+        model_name: str,
+        classifier: RandomForestClassifier,
+        y_train: pd.Series,
+        y_test: pd.Series,
+        preprocessor: ColumnTransformer,
+        original_X_df: pd.DataFrame,  # This is the full original X (raw)
+    ):
+        """
+        Performs the actual training, evaluation, and MLflow logging
+        for a single model using predefined best parameters.
+        """
+        with mlflow.start_run(run_name=model_name) as run:
+            run_id = run.info.run_id
+            logger.info(f"MLflow Run ID: {run_id}")
 
-        val_accuracy = accuracy_score(y_val, y_val_pred)
-        val_precision = precision_score(y_val, y_val_pred)
-        val_recall = recall_score(y_val, y_val_pred)
-        val_f1 = f1_score(y_val, y_val_pred)
-        val_roc_auc = roc_auc_score(y_val, y_val_proba)
+            # Log the best parameters that are being used for this run
+            mlflow.log_params(self.config.best_params)
+            logger.info(
+                f"Logged best parameters used for training: {self.config.best_params}"
+            )
 
-        print(f"\n--- Validation Metrics for {model_name} ---")
-        print(f"Accuracy: {val_accuracy:.4f}")
-        print(f"Precision: {val_precision:.4f}")
-        print(f"Recall: {val_recall:.4f}")
-        print(f"F1-Score: {val_f1:.4f}")
-        print(f"ROC AUC: {val_roc_auc:.4f}")
+            full_pipeline = Pipeline(
+                steps=[
+                    ("preprocessor", preprocessor),  # The fitted preprocessor object
+                    ("classifier", classifier),
+                ]
+            )
+            logger.info(
+                "Created full scikit-learn pipeline (preprocessor + classifier)."
+            )
 
-        mlflow.log_metric("val_accuracy", val_accuracy)
-        mlflow.log_metric("val_precision", val_precision)
-        mlflow.log_metric("val_recall", val_recall)
-        mlflow.log_metric("val_f1_score", val_f1)
-        mlflow.log_metric("val_roc_auc", val_roc_auc)
+            # Get the original (raw) training data corresponding to y_train's index
+            X_train_original_format = original_X_df.loc[y_train.index]
+            logger.info(
+                f"Fitting pipeline on training data (shape: {X_train_original_format.shape})..."
+            )
+            full_pipeline.fit(X_train_original_format, y_train)
+            logger.info("Pipeline fitting completed.")
 
-        # --- Evaluate on Test Set ---
-        y_test_pred = best_model.predict(
-            original_X_for_example.loc[y_test.index]
-        )  # Predict on original X_test part
-        y_test_proba = best_model.predict_proba(
-            original_X_for_example.loc[y_test.index]
-        )[:, 1]
+            # --- Evaluate on Test Set ---
+            X_test_original_format = original_X_df.loc[y_test.index]
 
-        test_accuracy = accuracy_score(y_test, y_test_pred)
-        test_precision = precision_score(y_test, y_test_pred)
-        test_recall = recall_score(y_test, y_test_pred)
-        test_f1 = f1_score(y_test, y_test_pred)
-        test_roc_auc = roc_auc_score(y_test, y_test_proba)
+            y_test_pred = full_pipeline.predict(X_test_original_format)
+            y_test_proba = full_pipeline.predict_proba(X_test_original_format)[:, 1]
 
-        print(f"\n--- Test Metrics for {model_name} ---")
-        print(f"Accuracy: {test_accuracy:.4f}")
-        print(f"Precision: {test_precision:.4f}")
-        print(f"Recall: {test_recall:.4f}")
-        print(f"F1-Score: {test_f1:.4f}")
-        print(f"ROC AUC: {test_roc_auc:.4f}")
+            test_accuracy = accuracy_score(y_test, y_test_pred)
+            test_precision = precision_score(y_test, y_test_pred)
+            test_recall = recall_score(y_test, y_test_pred)
+            test_f1 = f1_score(y_test, y_test_pred)
+            test_roc_auc = roc_auc_score(y_test, y_test_proba)
 
-        mlflow.log_metric("test_accuracy", test_accuracy)
-        mlflow.log_metric("test_precision", test_precision)
-        mlflow.log_metric("test_recall", test_recall)
-        mlflow.log_metric("test_f1_score", test_f1)
-        mlflow.log_metric("test_roc_auc", test_roc_auc)
+            logger.info(f"--- Test Metrics for {model_name} ---")
+            logger.info(f"Accuracy: {test_accuracy:.4f}")
+            logger.info(f"Precision: {test_precision:.4f}")
+            logger.info(f"Recall: {test_recall:.4f}")
+            logger.info(f"F1-Score: {test_f1:.4f}")
+            logger.info(f"ROC AUC: {test_roc_auc:.4f}")
 
-        # Log classification report
-        report = classification_report(y_test, y_test_pred, output_dict=True)
-        mlflow.log_dict(report, "classification_report.json")
+            mlflow.log_metric("test_accuracy", test_accuracy)
+            mlflow.log_metric("test_precision", test_precision)
+            mlflow.log_metric("test_recall", test_recall)
+            mlflow.log_metric("test_f1_score", test_f1)
+            mlflow.log_metric("test_roc_auc", test_roc_auc)
 
-        # --- Log the best model to MLflow and register it ---
-        # The input_example should be a Pandas DataFrame that matches the input format
-        # of your model_pipeline (i.e., the raw features before any preprocessing).
-        # input_example = original_X_for_example.iloc[
-        #     [0]
-        # ]  # Use the first row of original X as input example
+            # Log classification report
+            report = classification_report(y_test, y_test_pred, output_dict=True)
+            mlflow.log_dict(report, "classification_report.json")
+            logger.info("Logged test metrics and classification report to MLflow.")
 
-        # Infer the model signature for robust deployment
-        # Pass the original (unprocessed) input example to infer_signature
-        # signature = infer_signature(input_example, best_model.predict(input_example))
+            try:
+                tracking_uri_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
-        # mlflow.sklearn.log_model(
-        #     sk_model=best_model,
-        #     artifact_path="loan_approval_model",
-        #     signature=signature,
-        #     input_example=input_example,
-        #     tags={"model_type": "RandomForestClassifier", "dataset": "LoanApproval"},
-        # )
+                if tracking_uri_type_store != "file":
+                    mlflow.sklearn.log_model(
+                        sk_model=full_pipeline,
+                        artifact_path=self.config.artifact_path,
+                        registered_model_name=self.config.registered_model_name,
+                    )
+                else:
+                    mlflow.sklearn.log_model(
+                        sk_model=full_pipeline,
+                        artifact_path=self.config.artifact_path,
+                    )
 
-        print(
-            f"\nModel logged to MLflow and registered as 'LoanApprovalRandomForestModel' (Run ID: {run_id})."
-        )
+                logger.info(
+                    f"Model logged to MLflow and registered as '{self.config.registered_model_name}' (Run ID: {run_id})."
+                )
 
-        return run_id
-
-
-if __name__ == "__main__":
-    # Ensure MLflow tracking URI is set (e.g., to a local directory or a server)
-    mlflow.set_experiment("Loan_Approval_RandomForest_Experiments")
-    np.random.seed(42)  # For reproducibility
-
-    # Load data
-    df_raw = load_data()
-    if df_raw is None:
-        print("Exiting as data could not be loaded.")
-        exit()
-
-    # Preprocess data and get the fitted preprocessor and original X for input example
-    X_processed_np, y_series, preprocessor, feature_names, original_X_df = (
-        initiate_data_transformation(df_raw.copy())
-    )
-
-    # Split the processed data (for training, validation, test sets)
-    X_train, X_val, X_test, y_train, y_val, y_test = split_data(
-        X_processed_np, y_series
-    )
-
-    # Define the classifier and its parameter grid
-    rf_classifier = RandomForestClassifier(random_state=42)
-    rf_param_grid = {
-        "classifier__n_estimators": [50, 100, 200],
-        "classifier__max_depth": [None, 10, 20],
-        "classifier__min_samples_split": [2, 5],
-    }
-
-    # Train and log the Random Forest model
-    train_and_log_model(
-        model_name="Random_Forest_Hyperparameter_Tuning",
-        classifier=rf_classifier,
-        param_grid=rf_param_grid,
-        X_train=X_train,
-        y_train=y_train,
-        X_val=X_val,
-        y_val=y_val,
-        X_test=X_test,
-        y_test=y_test,
-        preprocessor=preprocessor,
-        original_X_for_example=original_X_df,  # Pass the original X DataFrame for input_example and GridSearchCV
-    )
-
-    print(
-        "\nTraining and logging complete. Run 'mlflow ui' in your terminal to view runs."
-    )
+                return run_id
+            except Exception as e:
+                logger.error(
+                    f"An unexpected error occurred in ModelTrainer._perform_training_and_logging: {e}",
+                )
+                raise e
