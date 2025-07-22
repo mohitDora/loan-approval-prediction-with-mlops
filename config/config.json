@@ -4,6 +4,11 @@
     "root_dir": "artifacts/data",
     "source_url": "mongodb+srv://doramohitkumar:<password>@cluster0.2nsiys2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
     "mongo_db_name": "loan_approval_db",
-    "mongo_collection_name": "raw_loans"
+    "mongo_collection_name": "raw_loans",
+    "file_name": "loanApprovalPrediction.csv"
+  },
+  "data_processing": {
+    "root_dir": "artifacts/preprocesser",
+    "preprocessor_object_file_name": "preprocessor.joblib"
   }
 }

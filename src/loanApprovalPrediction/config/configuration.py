@@ -8,7 +8,7 @@ from loanApprovalPrediction.constants import (
     PARAMS_FILE_PATH,
     ROOT_DIR,
 )
-from loanApprovalPrediction.entity import DataIngestionConfig
+from loanApprovalPrediction.entity import DataIngestionConfig, DataProcessingConfig
 from loanApprovalPrediction.utils.common import create_directories, read_json
 
 load_dotenv()
@@ -31,19 +31,31 @@ class ConfigurationManager:
         )
 
         create_directories([Path.joinpath(ROOT_DIR, config["root_dir"])])
-        create_directories([Path.joinpath(ROOT_DIR, config["root_dir"], "raw_data")])
-        create_directories(
-            [Path.joinpath(ROOT_DIR, config["root_dir"], "processed_data")]
-        )
+        # create_directories([Path.joinpath(ROOT_DIR, config["root_dir"], "raw_data")])
+        # create_directories(
+        #     [Path.joinpath(ROOT_DIR, config["root_dir"], "processed_data")]
+        # )
 
         data_ingestion_config = DataIngestionConfig(
             root_dir=config["root_dir"],
             source_url=source_url,
             mongo_db_name=config["mongo_db_name"],
             mongo_collection_name=config["mongo_collection_name"],
+            file_name=config["file_name"],
         )
 
         return data_ingestion_config
+
+    def get_data_processing_config(self):
+        config = self.config["data_processing"]
+        create_directories([Path.joinpath(ROOT_DIR, config["root_dir"])])
+
+        data_processing_config = DataProcessingConfig(
+            root_dir=config["root_dir"],
+            preprocessor_object_file_name=config["preprocessor_object_file_name"],
+        )
+
+        return data_processing_config
 
 
 if __name__ == "__main__":

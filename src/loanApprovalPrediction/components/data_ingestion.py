@@ -59,9 +59,7 @@ class DataIngestion:
                 df = df.drop(columns=["_id"])
 
             # Save the raw data to CSV
-            path = (
-                f"{ROOT_DIR}/{self.config.root_dir}/raw_data/loanApprovalPrediction.csv"
-            )
+            path = f"{ROOT_DIR}/{self.config.root_dir}/{self.config.file_name}"
             print(path)
             df.to_csv(
                 path,
