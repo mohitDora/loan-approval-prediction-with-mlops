@@ -1,3 +1,9 @@
+[project]
+name = "loan-approval-prediction-with-mlops"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+
 [tool.ruff]
 line-length = 88
 target-version = "py38"
