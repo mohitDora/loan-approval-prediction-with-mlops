@@ -1,10 +1,8 @@
-import os
-import tempfile
 from pathlib import Path
-import pytest
-import pandas as pd
 from unittest import mock
-from sklearn.compose import ColumnTransformer
+
+import pandas as pd
+import pytest
 
 from loanApprovalPrediction.components.data_processor import DataProcessor
 from loanApprovalPrediction.components.model_trainer import ModelTrainer
@@ -17,8 +15,9 @@ BEST_PARAMS = {
     "max_depth": 3,
     "min_samples_split": 2,
     "min_samples_leaf": 1,
-    "bootstrap": True
+    "bootstrap": True,
 }
+
 
 @pytest.fixture
 def sample_raw_data(tmp_path: Path) -> str:
@@ -28,16 +27,20 @@ def sample_raw_data(tmp_path: Path) -> str:
     df.to_csv(raw_data_path, index=False)
     return str(raw_data_path)
 
+
 @pytest.fixture
 def data_processing_config(tmp_path: Path) -> DataProcessingConfig:
     return DataProcessingConfig(
-        root_dir=str(tmp_path),
-        preprocessor_object_file_name="preprocessor.joblib"
+        root_dir=str(tmp_path), preprocessor_object_file_name="preprocessor.joblib"
     )
 
+
 @pytest.fixture
-def data_processor(sample_raw_data: str, data_processing_config: DataProcessingConfig) -> DataProcessor:
+def data_processor(
+    sample_raw_data: str, data_processing_config: DataProcessingConfig
+) -> DataProcessor:
     return DataProcessor(raw_data_path=sample_raw_data, config=data_processing_config)
+
 
 @pytest.fixture
 def model_trainer_config(tmp_path: Path) -> ModelTrainerConfig:
@@ -51,8 +54,9 @@ def model_trainer_config(tmp_path: Path) -> ModelTrainerConfig:
         random_state=42,
         test_size=0.2,
         val_size=0.25,
-        mlflow_tracking_uri="file:///tmp/mlruns"
+        mlflow_tracking_uri="file:///tmp/mlruns",
     )
+
 
 @mock.patch("mlflow.start_run")
 @mock.patch("mlflow.set_experiment")
@@ -70,13 +74,18 @@ def test_model_trainer_train_model(
     mock_set_experiment,
     mock_start_run,
     data_processor,
-    model_trainer_config
+    model_trainer_config,
 ):
     # Mock mlflow.start_run to be a context manager
     class DummyRun:
         info = type("info", (), {"run_id": "dummy_run_id"})()
-        def __enter__(self): return self
-        def __exit__(self, exc_type, exc_val, exc_tb): pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
     mock_start_run.return_value = DummyRun()
 
     trainer = ModelTrainer(config=model_trainer_config, preprocessor=data_processor)
@@ -86,4 +95,4 @@ def test_model_trainer_train_model(
     assert mock_log_params.called
     assert mock_log_metric.called
     assert mock_log_dict.called
-    assert mock_log_model.called 
+    assert mock_log_model.called

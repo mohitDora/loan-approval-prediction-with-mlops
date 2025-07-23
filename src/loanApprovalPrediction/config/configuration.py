@@ -24,7 +24,6 @@ class ConfigurationManager:
     ):
         self.config = read_json(Path.joinpath(ROOT_DIR, config_filepath))
         self.params = read_json(Path.joinpath(ROOT_DIR, params_filepath))
-        print(self.config)
         create_directories([Path.joinpath(ROOT_DIR, self.config["artifacts_root"])])
 
     def get_data_ingestion_config(self):
@@ -58,17 +57,17 @@ class ConfigurationManager:
         return data_processing_config
 
     def get_model_trainer_config(self) -> ModelTrainerConfig:
-
+        config = self.config["model_training"]
         return ModelTrainerConfig(
-            root_dir=Path("artifacts/models"),
-            experiment_name="Loan_Approval_RandomForest_Direct_Train",  # Updated experiment name
-            registered_model_name="LoanApprovalRandomForestModel",
-            artifact_path="loan_approval_model",
-            best_params=self.params,  # Pass the best parameters directly
-            cv_folds=3,  # Not directly used for single model train, but kept in config
-            random_state=42,
-            test_size=0.2,
-            val_size=0.25,
+            root_dir=config["root_dir"],
+            experiment_name=config["experiment_name"],
+            registered_model_name=config["registered_model_name"],
+            artifact_path=config["artifact_path"],
+            best_params=self.params,
+            cv_folds=config["cv_folds"],
+            random_state=config["random_state"],
+            test_size=config["test_size"],
+            val_size=config["val_size"],
             mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
         )
 

@@ -9,7 +9,6 @@ from sklearn.compose import ColumnTransformer
 
 from loanApprovalPrediction.components.data_processor import DataProcessor
 from loanApprovalPrediction.entity import DataProcessingConfig
-
 from loanApprovalPrediction.utils.common import read_json
 
 
