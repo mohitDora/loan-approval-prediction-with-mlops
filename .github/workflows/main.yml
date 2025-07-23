@@ -49,7 +49,7 @@ jobs:
         run: pytest
 
       - name: Run Data Pipeline
-        run: python main.py
+        run: dvc repro
 
       - name: DVC Push New Model Artifacts to S3
         if: success()
