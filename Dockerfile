@@ -12,9 +12,9 @@ COPY requirements.txt /app/
 COPY setup.py /app/
 COPY pyproject.toml /app/
 
-RUN pip install -r requirements.txt
-
 COPY . /app/
+
+RUN pip install -r requirements.txt
 
 EXPOSE 8000
 
