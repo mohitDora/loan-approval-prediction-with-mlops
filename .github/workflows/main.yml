@@ -1,95 +1,92 @@
-# name: ML CI/CD Pipeline
+name: ML CI/CD Pipeline
 
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
-#     branches:
-#       - main
-#   workflow_dispatch:
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
-# jobs:
-#   build-lint-test-train:
-#     runs-on: ubuntu-latest
+jobs:
+  build-lint-test-train:
+    runs-on: ubuntu-latest
 
-#     env:
-#       MONGO_DB_PASSWORD: ${{ secrets.MONGO_DB_PASSWORD }}
-#       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-#       MLFLOW_TRACKING_USERNAME: "doramohitkumar"
-#       MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-#       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#       AWS_DEFAULT_REGION: "ap-south-1"
+    env:
+      MONGO_DB_PASSWORD: ${{ secrets.MONGO_DB_PASSWORD }}
+      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      MLFLOW_TRACKING_USERNAME: "doramohitkumar"
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: "ap-south-1"
 
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-#       - name: Set up Python 3.11
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: "3.11"
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-#       - name: Install project dependencies (including dvc[s3])
-#         run: pip install dvc[s3] pytest ruff
+      - name: Install project dependencies (including dvc[s3])
+        run: pip install dvc[s3] pytest ruff
 
-#       - name: Install Git (DVC dependency)
-#         run: sudo apt-get update && sudo apt-get install -y git
+      - name: Install Git (DVC dependency)
+        run: sudo apt-get update && sudo apt-get install -y git
 
-#       - name: DVC Pull Data and Model Artifacts for Tests
-#         run: dvc pull
+      - name: DVC Pull Data and Model Artifacts for Tests
+        run: dvc pull
 
-#       - name: Run Ruff Auto-fix and Format
-#         run: |
-#           ruff check --fix src/ tests/
-#           ruff format src/ tests/
+      - name: Run Ruff Auto-fix and Format
+        run: |
+          ruff check . --fix
+          ruff format .
 
-#       - name: Run Pytest
-#         run: pytest
+      - name: Run Pytest
+        run: pytest
 
-#       - name: Run Data Pipeline
-#         run: python main.py
+      - name: Run Data Pipeline
+        run: python main.py
 
-#       - name: DVC Push New Model Artifacts to S3
-#         if: success() # Only push if previous steps succeeded
-#         run: dvc push
+      - name: DVC Push New Model Artifacts to S3
+        if: success()
+        run: dvc push
 
-#   build-docker-image:
-#     runs-on: ubuntu-latest
-#     needs: build-lint-test-train
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: build-lint-test-train
 
-#     env:
-#       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-#       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-#       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#       AWS_DEFAULT_REGION: "ap-south-1"
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: "ap-south-1"
+      IMAGE_NAME: "loan-approval-predictor-api"
 
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-#       - name: Install DVC and Git (for potential Docker build-time pull)
-#         run: |
-#           pip install dvc[s3]
-#           sudo apt-get update && sudo apt-get install -y git
+      - name: Install DVC and Git (for potential Docker build-time pull)
+        run: |
+          sudo apt-get update && sudo apt-get install -y git
 
-#       - name: DVC Pull Artifacts for Docker Build
-#         run: dvc pull
+      - name: Docker Login
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-#       - name: Docker Login
-#         if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-#         uses: docker/login-action@v3
-#         with:
-#           username: ${{ secrets.DOCKER_USERNAME }}
-#           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker image
+        run: |
+          docker build -t ${{secrets.IMAGE_NAME}}:${{ github.sha }} .
+          docker tag ${{secrets.IMAGE_NAME}}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/${{secrets.IMAGE_NAME}}:latest
 
-#       - name: Build Docker image
-#         run: |
-#           docker build -t house-price-predictor-api:${{ github.sha }} .
-#           docker tag house-price-predictor-api:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/house-price-predictor-api:latest
-
-#       - name: Push Docker image
-#         run: |
-#           docker push ${{ secrets.DOCKER_USERNAME }}/house-price-predictor-api:latest
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{secrets.IMAGE_NAME}}:latest

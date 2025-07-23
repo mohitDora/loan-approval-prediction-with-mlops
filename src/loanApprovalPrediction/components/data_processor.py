@@ -216,3 +216,19 @@ class DataProcessor:
             error_msg = f"Error during data splitting: {e}"
             logger.error(error_msg)
             raise e
+
+    def save_artifacts(self, preprocessor: ColumnTransformer):
+        """
+        Saves the fitted preprocessor and the list of feature names.
+
+        :param preprocessor: The fitted ColumnTransformer object.
+        :param feature_names: List of feature names after preprocessing.
+        :raises MyException: If any error occurs during saving.
+        """
+        try:
+            joblib.dump(preprocessor, self.preprocessor_save_path)
+            logger.info(f"Preprocessor saved at: {self.preprocessor_save_path}")
+        except Exception as e:
+            error_msg = f"Error saving preprocessor artifacts: {e}"
+            logger.error(error_msg)
+            raise e
