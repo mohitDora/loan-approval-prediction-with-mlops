@@ -1,0 +1,72 @@
+{
+  "Loan_ID": [
+    "LP001002",
+    "LP001003",
+    "LP001004",
+    "LP001005",
+    "LP001006",
+    "LP001007",
+    "LP001008",
+    "LP001009",
+    "LP001010",
+    "LP001011"
+  ],
+  "Gender": [
+    "Male",
+    "Female",
+    "Male",
+    "Male",
+    "Female",
+    "Male",
+    "Female",
+    "Male",
+    "Female",
+    "Male"
+  ],
+  "Married": ["No", "Yes", "Yes", "No", "Yes", "No", "Yes", "No", "Yes", "Yes"],
+  "Dependents": ["0", "1", "2", "0", "3+", "1", "0", "2", "1", "0"],
+  "Education": [
+    "Graduate",
+    "Not Graduate",
+    "Graduate",
+    "Graduate",
+    "Not Graduate",
+    "Graduate",
+    "Graduate",
+    "Not Graduate",
+    "Graduate",
+    "Graduate"
+  ],
+  "Self_Employed": [
+    "No",
+    "Yes",
+    "No",
+    "Yes",
+    "No",
+    "No",
+    "Yes",
+    "No",
+    "Yes",
+    "No"
+  ],
+  "ApplicantIncome": [
+    5849, 4583, 3000, 4000, 6000, 2500, 3200, 4200, 3100, 3900
+  ],
+  "CoapplicantIncome": [0, 1508, 0, 1000, 0, 500, 800, 0, 1200, 0],
+  "LoanAmount": [128, 128, 66, 100, 120, 80, 95, 110, 85, 75],
+  "Loan_Amount_Term": [360, 360, 360, 360, 360, 360, 360, 360, 360, 360],
+  "Credit_History": [1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+  "Property_Area": [
+    "Urban",
+    "Rural",
+    "Urban",
+    "Semiurban",
+    "Urban",
+    "Rural",
+    "Urban",
+    "Semiurban",
+    "Rural",
+    "Urban"
+  ],
+  "Loan_Status": ["Y", "N", "Y", "N", "Y", "N", "Y", "N", "Y", "N"]
+}
