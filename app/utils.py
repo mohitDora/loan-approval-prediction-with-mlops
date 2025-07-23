@@ -1,11 +1,6 @@
-import subprocess
-from pathlib import Path
 
-import joblib
 import mlflow
 
-from loanApprovalPrediction.config import configuration
-from loanApprovalPrediction.constants import ROOT_DIR
 from loanApprovalPrediction.logger import logger
 
 

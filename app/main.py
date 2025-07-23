@@ -1,11 +1,11 @@
 import pandas as pd
+import uvicorn
 from fastapi import FastAPI, HTTPException, status
 from pydantic import ValidationError
 
 from app.schema import LoanApplication, PredictionResponse
 from app.utils import load_model_artifacts
 from loanApprovalPrediction.logger import logger
-import uvicorn
 
 app = FastAPI(
     title="House Price Prediction API",

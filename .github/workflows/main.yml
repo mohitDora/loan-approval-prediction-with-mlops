@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install project dependencies (including dvc[s3])
-        run: pip install dvc[s3] pytest ruff
+        run: pip install dvc[s3] pytest ruff pandas numpy scikit-learn joblib
 
       - name: Install Git (DVC dependency)
         run: sudo apt-get update && sudo apt-get install -y git

@@ -9,10 +9,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
+from loanApprovalPrediction.config import configuration
 from loanApprovalPrediction.constants import ROOT_DIR
 from loanApprovalPrediction.entity import DataProcessingConfig
 from loanApprovalPrediction.logger import logger
-from loanApprovalPrediction.config import configuration
+
 
 class DataProcessor:
     """
@@ -233,6 +234,7 @@ class DataProcessor:
             logger.error(error_msg)
             raise e
 
+
 if __name__ == "__main__":
     try:
         config = configuration.ConfigurationManager()
@@ -240,7 +242,9 @@ if __name__ == "__main__":
         preprocessorConfig = config.get_data_processing_config()
         model_trainer_config = config.get_model_trainer_config()
 
-        raw_data_path = f"{ROOT_DIR}/{ingestionConfig.root_dir}/{ingestionConfig.file_name}"
+        raw_data_path = (
+            f"{ROOT_DIR}/{ingestionConfig.root_dir}/{ingestionConfig.file_name}"
+        )
 
         data_processor = DataProcessor(raw_data_path, preprocessorConfig)
         _, _, preprocessor, _, _ = data_processor.initiate_data_transformation()
