@@ -1,0 +1,14 @@
+.gitignore
+.venv/
+env/
+logs/
+__pycache__/
+*.pyc
+*.egg-info/
+mlruns/
+temp/
+
+# Ignore actual data and preprocessor/model files, as DVC will pull them inside the container
+# This is crucial for small Docker images and for DVC to manage them.
+artifacts/data
+artifacts/preprocessor
