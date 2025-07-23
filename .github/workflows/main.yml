@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install project dependencies (including dvc[s3])
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-actions.txt
 
       - name: Install Git (DVC dependency)
         run: sudo apt-get update && sudo apt-get install -y git
@@ -84,9 +84,9 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{secrets.IMAGE_NAME}}:${{ github.sha }} .
-          docker tag ${{secrets.IMAGE_NAME}}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/${{secrets.IMAGE_NAME}}:latest
+          docker build -t $IMAGE_NAME:${{ github.sha }} .
+          docker tag $IMAGE_NAME:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{secrets.IMAGE_NAME}}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
