@@ -19,6 +19,9 @@ from sklearn.pipeline import Pipeline
 
 from loanApprovalPrediction.entity import ModelTrainerConfig
 from loanApprovalPrediction.logger import logger
+from loanApprovalPrediction.config import configuration
+from loanApprovalPrediction.components.data_processor import DataProcessor
+from loanApprovalPrediction.constants import ROOT_DIR
 
 load_dotenv()
 
@@ -208,3 +211,16 @@ class ModelTrainer:
                     f"An unexpected error occurred in ModelTrainer._perform_training_and_logging: {e}",
                 )
                 raise e
+
+if __name__ == "__main__":
+    config = configuration.ConfigurationManager()
+    data_ingestion_config = config.get_data_ingestion_config()
+    data_processor = DataProcessor(
+        raw_data_path=f"{ROOT_DIR}/{data_ingestion_config.root_dir}/{data_ingestion_config.file_name}",
+        config=config.get_data_processing_config(),
+    )
+    model_trainer_config = config.get_model_trainer_config()
+    model_trainer = ModelTrainer(
+        config=model_trainer_config, preprocessor=data_processor
+    )
+    model_trainer.train_model()

@@ -12,7 +12,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from loanApprovalPrediction.constants import ROOT_DIR
 from loanApprovalPrediction.entity import DataProcessingConfig
 from loanApprovalPrediction.logger import logger
-
+from loanApprovalPrediction.config import configuration
 
 class DataProcessor:
     """
@@ -232,3 +232,20 @@ class DataProcessor:
             error_msg = f"Error saving preprocessor artifacts: {e}"
             logger.error(error_msg)
             raise e
+
+if __name__ == "__main__":
+    try:
+        config = configuration.ConfigurationManager()
+        ingestionConfig = config.get_data_ingestion_config()
+        preprocessorConfig = config.get_data_processing_config()
+        model_trainer_config = config.get_model_trainer_config()
+
+        raw_data_path = f"{ROOT_DIR}/{ingestionConfig.root_dir}/{ingestionConfig.file_name}"
+
+        data_processor = DataProcessor(raw_data_path, preprocessorConfig)
+        _, _, preprocessor, _, _ = data_processor.initiate_data_transformation()
+        data_processor.save_artifacts(preprocessor=preprocessor)
+        logger.info("PreProcessing Completed.")
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+        raise e

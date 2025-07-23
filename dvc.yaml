@@ -1,0 +1,18 @@
+stages:
+  data_ingestion:
+    cmd: python src/loanApprovalPrediction/components/data_ingestion.py
+    deps:
+      - src/loanApprovalPrediction/components/data_ingestion.py
+      - config/config.json
+
+  data_preprocessing:
+    cmd: python src/loanApprovalPrediction/components/data_processor.py
+    deps:
+      - src/loanApprovalPrediction/components/data_processor.py
+      - config/config.json
+
+  model_trainer:
+    cmd: python src/loanApprovalPrediction/components/model_trainer.py
+    deps:
+      - src/loanApprovalPrediction/components/model_trainer.py
+      - config/config.json

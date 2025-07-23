@@ -9,3 +9,4 @@ __pycache__
 *.csv
 *.joblib
 .ruff_cache
+.pytest_cache

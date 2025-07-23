@@ -1,0 +1,35 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python src/loanApprovalPrediction/components/data_ingestion.py
+    deps:
+    - path: config/config.json
+      hash: md5
+      md5: b14cb60b16b172a0f659f9739bbd2be9
+      size: 823
+    - path: src/loanApprovalPrediction/components/data_ingestion.py
+      hash: md5
+      md5: f775cad375eb8e7bc5b8c8ec1673dedc
+      size: 3197
+  data_preprocessing:
+    cmd: python src/loanApprovalPrediction/components/data_processor.py
+    deps:
+    - path: config/config.json
+      hash: md5
+      md5: b14cb60b16b172a0f659f9739bbd2be9
+      size: 823
+    - path: src/loanApprovalPrediction/components/data_processor.py
+      hash: md5
+      md5: 9626d82cdafb46afacf9d60ff93d126a
+      size: 10499
+  model_trainer:
+    cmd: python src/loanApprovalPrediction/components/model_trainer.py
+    deps:
+    - path: config/config.json
+      hash: md5
+      md5: b14cb60b16b172a0f659f9739bbd2be9
+      size: 823
+    - path: src/loanApprovalPrediction/components/model_trainer.py
+      hash: md5
+      md5: 27a45d8938a280207344ef77f5ae8055
+      size: 9024
