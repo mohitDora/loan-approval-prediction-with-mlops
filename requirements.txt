@@ -1,8 +1,6 @@
 pandas
 numpy
 scikit-learn
-matplotlib
-seaborn
 dvc[s3]
 mlflow==2.2.2
 pytest

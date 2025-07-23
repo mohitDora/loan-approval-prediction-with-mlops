@@ -1,9 +1,0 @@
-pandas
-numpy
-scikit-learn
-dvc[s3]
-pytest
-joblib
-ruff
-python-dotenv
--e .
